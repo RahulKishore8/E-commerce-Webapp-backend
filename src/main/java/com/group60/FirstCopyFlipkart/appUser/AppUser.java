@@ -9,7 +9,7 @@ public class AppUser {
     private String userID;
     private String username;
     private String emailID;
-    private Role role;
+    private String role;
     private String phoneNumber;
     private Address address;
     private String password;
