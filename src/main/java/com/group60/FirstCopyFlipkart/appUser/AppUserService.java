@@ -44,11 +44,20 @@ public class AppUserService implements UserDetailsService {
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
         return appUserRepository.insert(appUser);
     }
+    AppUser save(AppUser appUser){
+        return appUserRepository.save(appUser);
+    }
 
     //Change Password
-    AppUser changePassword(AppUser appUser, String newPassword){
-        appUser.setPassword(passwordEncoder.encode(newPassword));
-        return appUserRepository.save(appUser);
+    AppUser changePassword(String emailID, String newPassword){
+        AppUser appUser = findUserByEmailID(emailID);
+        if(appUser != null){
+            appUser.setPassword(passwordEncoder.encode(newPassword));
+            return appUserRepository.save(appUser);
+        } else{
+            return null;
+        }
+
     }
 
     //Change Address
@@ -63,8 +72,8 @@ public class AppUserService implements UserDetailsService {
         return appUserRepository.save(appUser);
     }
     //Delete User
-    void deleteAppUser(AppUser appUser){
-        appUserRepository.deleteAppUserByEmailID(appUser.getEmailID());
+    void deleteAppUserByEmailID(String emailID){
+        appUserRepository.deleteAppUserByEmailID(emailID);
     }
 
 

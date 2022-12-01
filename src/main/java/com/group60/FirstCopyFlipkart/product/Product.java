@@ -14,14 +14,21 @@ public class Product {
     private float discount;
     private int deliveryTime;
     private int quantity;
-
+    private String imageURL;
+    private int orderCount;
     public Product(String productName, String categoryName, float price,
-                   float discount, int deliveryTime, int quantity) {
+                   float discount, int deliveryTime, int quantity, String imageURL) {
         this.productName = productName;
         this.categoryName = categoryName;
         this.price = price;
         this.discount = discount;
         this.deliveryTime = deliveryTime;
         this.quantity = quantity;
+        this.imageURL = imageURL;
+        this.orderCount = 0;
+    }
+
+    public void incrementOrderCount(int count){
+        orderCount = orderCount + count;
     }
 }
