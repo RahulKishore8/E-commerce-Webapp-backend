@@ -31,8 +31,8 @@ public class AppUserService implements UserDetailsService {
             log.info("User found in database: {}", emailID);
         }
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(appUser.getRole()));
-        return new User(appUser.getUsername(), appUser.getPassword(), authorities);
+        authorities.add(new SimpleGrantedAuthority(appUser.getRole().getName()));
+        return new User(appUser.getEmailID(), appUser.getPassword(), authorities);
     }
     //Access
     AppUser findUserByEmailID(String emailID){

@@ -1,8 +1,15 @@
 package com.group60.FirstCopyFlipkart.appUser;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-public enum Role {
-    CUSTOMER,
-    MANAGER,
-    ADMIN
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Role {
+    @Id
+    private String id;
+    private String name;
 }

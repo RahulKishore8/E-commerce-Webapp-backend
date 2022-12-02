@@ -27,10 +27,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 public class AppUserController {
     private final AppUserService appUserService;
-
+    private final RoleRepository roleRepository;
     @GetMapping
-    public ResponseEntity<AppUser> getAppUserByEmailID(HttpServletRequest request, @RequestBody EmailIDJSON emailID){
-        AppUser appUser = appUserService.findUserByEmailID(emailID.emailID);
+    public ResponseEntity<AppUser> getAppUserByEmailID(HttpServletRequest request, @RequestBody EmailIDJSON emailIDJSON){
+        AppUser appUser = appUserService.findUserByEmailID(emailIDJSON.getEmailID());
         if(appUser != null){
             appUser.setPassword("");
             return new ResponseEntity<>(appUser, HttpStatus.OK);
@@ -39,51 +39,64 @@ public class AppUserController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<AppUser> createNewAppUser(@RequestBody UserJSON newUserJSON){
-        AppUser newUser = new AppUser();
-        newUser.setUsername(newUserJSON.getUsername());
-        newUser.setEmailID(newUserJSON.getEmailID());
-        newUser.setPassword(newUserJSON.getPassword());
-        newUser.setRole(newUserJSON.getRole());
-        newUser.setPhoneNumber(newUserJSON.getPhoneNumber());
-        newUser.setAddress(newUserJSON.getAddress());
-        newUser.setWalletAmount(1000);
-
-        AppUser createdAppUser = appUserService.insert(newUser);
-        if(createdAppUser != null){
-            createdAppUser.setPassword("");
-            return new ResponseEntity<>(createdAppUser, HttpStatus.OK);
+    @PostMapping("/register")
+    public void createNewAppUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserJSON newUserJSON) throws IOException {
+        AppUser user = appUserService.findUserByEmailID(newUserJSON.getEmailID());
+        if(user != null){
+            Map<String, String> message = new HashMap<>();
+            response.setHeader("error", "User already exists");
+            response.setStatus(HttpStatus.NOT_MODIFIED.value());
         }else{
-            return new ResponseEntity<>(null, HttpStatus.NOT_MODIFIED);
+            AppUser newUser = new AppUser();
+            newUser.setUsername(newUserJSON.getUsername());
+            newUser.setEmailID(newUserJSON.getEmailID());
+            newUser.setPassword(newUserJSON.getPassword());
+            newUser.setRole(roleRepository.findRoleByName("ROLE_CUSTOMER"));
+            newUser.setPhoneNumber(newUserJSON.getPhoneNumber());
+            newUser.setAddress(newUserJSON.getAddress());
+            newUser.setWalletAmount(1000);
+            AppUser createdAppUser = appUserService.insert(newUser);
+            if(createdAppUser != null){
+                response.setStatus(HttpStatus.OK.value());
+            }else{
+                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            }
         }
     }
 
     @PatchMapping
-    public ResponseEntity<AppUser> updateAppUser(@RequestBody UserJSON updatedUserJSON){
+    public void updateAppUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserJSON updatedUserJSON){
         AppUser user = appUserService.findUserByEmailID(updatedUserJSON.getEmailID());
         if(user != null){
             user.setUsername(updatedUserJSON.getUsername());
             user.setEmailID(updatedUserJSON.getEmailID());
-            user.setRole(updatedUserJSON.getRole());
             user.setPhoneNumber(updatedUserJSON.getPhoneNumber());
             user.setAddress(updatedUserJSON.getAddress());
             user = appUserService.save(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            if(user != null){
+                response.setStatus(HttpStatus.OK.value());
+            }else{
+                response.setStatus(HttpStatus.NOT_MODIFIED.value());
+            }
         }else{
-            return new ResponseEntity<>(null, HttpStatus.NOT_MODIFIED);
+            response.setStatus(HttpStatus.NOT_MODIFIED.value());
         }
     }
 
-    @DeleteMapping
-    public void deleteAppUser(HttpServletRequest request, HttpServletResponse response, @RequestBody EmailIDJSON emailID){
-        appUserService.deleteAppUserByEmailID(emailID.getEmailID());
+    @DeleteMapping("/delete")
+    public void deleteAppUser(HttpServletRequest request, HttpServletResponse response){
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        log.info("delete User {}",emailID);
+        appUserService.deleteAppUserByEmailID(emailID);
         response.setStatus(HttpStatus.OK.value());
     }
 
     @PatchMapping("/change-password")
     public void changePassword(HttpServletRequest request, HttpServletResponse response, @RequestBody UpdatePasswordJSON updatePasswordJSON){
-        AppUser appUser = appUserService.changePassword(updatePasswordJSON.getEmailID(), updatePasswordJSON.getPassword());
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        AppUser appUser = appUserService.changePassword(emailID, updatePasswordJSON.getPassword());
         if(appUser != null){
             response.setStatus(HttpStatus.OK.value());
         }else{
@@ -105,7 +118,7 @@ public class AppUserController {
                         .withSubject(appUser.getEmailID())
                         .withExpiresAt(new Date(System.currentTimeMillis() + 10*60*1000))
                         .withIssuer(request.getRequestURL().toString())
-                        .withClaim("roles", appUser.getRole())
+                        .withClaim("roles", appUser.getRole().getName())
                         .sign(algorithm);
 
                 Map<String, String> tokens = new HashMap<>();
@@ -128,44 +141,46 @@ public class AppUserController {
     }
 
     @GetMapping("/place-order")
-    public void placeOrder(HttpServletRequest request, HttpServletResponse response, @RequestBody EmailIDJSON emailIDJSON){
-        AppUser user = appUserService.findUserByEmailID(emailIDJSON.getEmailID());
+    public void placeOrder(HttpServletRequest request, HttpServletResponse response){
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        AppUser user = appUserService.findUserByEmailID(emailID);
         int totalPrice = user.getCart().getTotalPrice();
         if(user.getWalletAmount() >= totalPrice){
             user.setWalletAmount(user.getWalletAmount() - totalPrice);
-            user.getOrderList().add(new Order(user.getCart(),new Date(), "order placed"));
+            user.getOrderList().add(new Order(user.getUserID() + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
             user.getCart().setItemList(new ArrayList<>());
             response.setStatus(HttpStatus.OK.value());
         }else{
+            response.setHeader("error","Insufficient wallet balance");
             response.setStatus(HttpStatus.NOT_MODIFIED.value());
         }
+        appUserService.save(user);
     }
 
-    @GetMapping("/cart/increment")
-    public void incrementItemInCart(HttpServletRequest request, HttpServletResponse response, @RequestBody EmailIDJSON emailIDJSON){
-        AppUser user = appUserService.findUserByEmailID(emailIDJSON.getEmailID());
-        int totalPrice = user.getCart().getTotalPrice();
-        if(user.getWalletAmount() >= totalPrice){
-            user.setWalletAmount(user.getWalletAmount() - totalPrice);
-            user.getOrderList().add(new Order(user.getCart(),new Date(), "order placed"));
-            user.getCart().setItemList(new ArrayList<>());
-            response.setStatus(HttpStatus.OK.value());
-        }else{
-            response.setStatus(HttpStatus.NOT_MODIFIED.value());
-        }
+    @PatchMapping("/cart/increment")
+    public void incrementItemInCart(HttpServletRequest request, HttpServletResponse response, @RequestBody CartUpdateJSON cartUpdateJSON){
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        AppUser user = appUserService.findUserByEmailID(emailID);
+        user.incrementProductQuantity(cartUpdateJSON.getProductID());
+        appUserService.save(user);
     }
 
+    @PatchMapping("/card/decrement")
+    public void decrementItemInCart(HttpServletRequest request, HttpServletResponse response, @RequestBody CartUpdateJSON cartUpdateJSON){
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        AppUser user = appUserService.findUserByEmailID(emailID);
+        user.decrementProductQuantity(cartUpdateJSON.getProductID());
+        appUserService.save(user);
+    }
 }
 
-@Data
-class EmailIDJSON{
-    String emailID;
-}
 @Data
 class UserJSON {
     private String username;
     private String emailID;
-    private String role;
     private String phoneNumber;
     private Address address;
     private String password;
@@ -173,12 +188,25 @@ class UserJSON {
 
 @Data
 class UpdatePasswordJSON {
-    private String emailID;
     private String password;
 }
-
+@Data
+class EmailIDJSON{
+    private String emailID;
+}
 @Data
 class CartUpdateJSON {
-    private String emailID;
     private String productID;
+}
+
+class AuthToken{
+    public String getEmailID(HttpServletRequest request){
+        String authorizationHeader = request.getHeader(AUTHORIZATION);
+        String token = authorizationHeader.substring("Bearer ".length());
+        Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
+        JWTVerifier verifier = JWT.require(algorithm).build();
+        DecodedJWT decodedJWT = verifier.verify(token);
+        String emailID = decodedJWT.getSubject();
+        return emailID;
+    }
 }

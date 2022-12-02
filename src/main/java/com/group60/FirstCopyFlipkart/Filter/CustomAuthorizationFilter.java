@@ -30,10 +30,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getServletPath().equals("/login") || request.getServletPath().equals("/api/token/refresh") || request.getServletPath().equals("/register")) {
+        log.info(request.getServletPath().toString());
+        if(request.getServletPath().equals("/api/user/login") || request.getServletPath().equals("/api/token/refresh") || request.getServletPath().equals("/api/user/register")|| request.getServletPath().equals("/api/role")) {
             filterChain.doFilter(request,response);
         } else{
             String authorizationHeader = request.getHeader(AUTHORIZATION);
+            log.info("Authorisation header {}",authorizationHeader);
             if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 try{
                     String token = authorizationHeader.substring("Bearer ".length());
@@ -41,11 +43,15 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                     JWTVerifier verifier = JWT.require(algorithm).build();
                     DecodedJWT decodedJWT = verifier.verify(token);
                     String emailID = decodedJWT.getSubject();
-                    String role = decodedJWT.getClaim("roles").toString();
+                    String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                    authorities.add(new SimpleGrantedAuthority(role));
+                    stream(roles).forEach(role-> {
+                        authorities.add(new SimpleGrantedAuthority(role));
+                    });
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(emailID, null, authorities);
+                    log.info("token {}",token);
+                    log.info("Authorities {}",authenticationToken.getAuthorities().toString());
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request,response);
                 } catch (Exception exception){
