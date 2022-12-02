@@ -1,6 +1,9 @@
 package com.group60.FirstCopyFlipkart.appUser;
 
+import com.group60.FirstCopyFlipkart.Role.Role;
 import org.springframework.data.mongodb.repository.MongoRepository;
+
+import java.util.List;
 
 public interface AppUserRepository extends MongoRepository<AppUser, String> {
     //Access
@@ -12,6 +15,7 @@ public interface AppUserRepository extends MongoRepository<AppUser, String> {
     //Update
     AppUser save(AppUser appUser);
 
+    List<AppUser> findAllByRole(Role role);
     //Delete
     void deleteAppUserByEmailID(String emailID);
 

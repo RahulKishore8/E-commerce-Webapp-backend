@@ -1,5 +1,7 @@
 package com.group60.FirstCopyFlipkart.appUser;
 
+import com.group60.FirstCopyFlipkart.Role.Role;
+import com.group60.FirstCopyFlipkart.Role.RoleRepository;
 import com.group60.FirstCopyFlipkart.product.Product;
 import com.group60.FirstCopyFlipkart.product.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -23,6 +26,7 @@ import java.util.Date;
 public class AppUserService implements UserDetailsService {
     private final AppUserRepository appUserRepository;
     private final ProductRepository productRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     @Override
     public UserDetails loadUserByUsername(String emailID) throws UsernameNotFoundException {
@@ -38,21 +42,35 @@ public class AppUserService implements UserDetailsService {
         return new User(appUser.getEmailID(), appUser.getPassword(), authorities);
     }
     //Access
-    AppUser findUserByEmailID(String emailID){
+    public List<AppUser> findAllManagers(){
+        Role manager = roleRepository.findRoleByName("ROLE_MANAGER");
+        return appUserRepository.findAllByRole(manager);
+    }
+
+    public List<AppUser> findAllCustomers(){
+        Role customer = roleRepository.findRoleByName("ROLE_CUSTOMER");
+        return appUserRepository.findAllByRole(customer);
+    }
+
+    public List<AppUser> findAllDeliveryPersons(){
+        Role customer = roleRepository.findRoleByName("ROLE_DELIVERY_PERSON");
+        return appUserRepository.findAllByRole(customer);
+    }
+    public AppUser findUserByEmailID(String emailID){
         return appUserRepository.findAppUserByEmailID(emailID);
     }
 
     //Insert
-    AppUser insert(AppUser appUser){
+    public AppUser insert(AppUser appUser){
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
         return appUserRepository.insert(appUser);
     }
-    AppUser save(AppUser appUser){
+    public AppUser save(AppUser appUser){
         return appUserRepository.save(appUser);
     }
 
     //Change Password
-    AppUser changePassword(String emailID, String newPassword){
+    public AppUser changePassword(String emailID, String newPassword){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setPassword(passwordEncoder.encode(newPassword));
@@ -64,7 +82,7 @@ public class AppUserService implements UserDetailsService {
     }
 
     //Change Address
-    AppUser changeAddress(String emailID, Address newAddress){
+    public AppUser changeAddress(String emailID, Address newAddress){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setAddress(newAddress);
@@ -75,7 +93,7 @@ public class AppUserService implements UserDetailsService {
     }
 
     //Change PhoneNumber
-    AppUser changePhoneNumber(String emailID, String newPhoneNumber){
+    public AppUser changePhoneNumber(String emailID, String newPhoneNumber){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setPhoneNumber(newPhoneNumber);
@@ -86,7 +104,7 @@ public class AppUserService implements UserDetailsService {
     }
 
     //Change EmailID
-    AppUser changeEmailID(String emailID, String newEmailID){
+    public AppUser changeEmailID(String emailID, String newEmailID){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setPhoneNumber(newEmailID);
@@ -97,7 +115,7 @@ public class AppUserService implements UserDetailsService {
     }
 
     //Change Username
-    AppUser changeUsername(String emailID, String newUsername){
+    public AppUser changeUsername(String emailID, String newUsername){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setUsername(newUsername);
@@ -107,7 +125,7 @@ public class AppUserService implements UserDetailsService {
         }
     }
     //Add Balance
-    AppUser addBalance(String emailID, int addedBalance){
+    public AppUser addBalance(String emailID, int addedBalance){
         AppUser appUser = findUserByEmailID(emailID);
         if(appUser != null){
             appUser.setWalletAmount(appUser.getWalletAmount() + addedBalance);
@@ -117,36 +135,36 @@ public class AppUserService implements UserDetailsService {
         }
     }
     //Delete User
-    void deleteAppUserByEmailID(String emailID){
+    public void deleteAppUserByEmailID(String emailID){
         appUserRepository.deleteAppUserByEmailID(emailID);
     }
 
-    int getCartTotalPrice(String emailID){
+    public int getCartTotalPrice(String emailID){
         AppUser appUser = appUserRepository.findAppUserByEmailID(emailID);
         int totalPrice = 0;
         ArrayList<CartItem> itemList = appUser.getCart().getItemList();
-        for(int i = 0; i < itemList.size(); i++){
-            String productID = itemList.get(i).getProductID();
+        for (CartItem cartItem : itemList) {
+            String productID = cartItem.getProductID();
             Product product = productRepository.findProductByProductID(productID);
             float productPrice = product.getPrice();
-            totalPrice += itemList.get(i).getQuantity() * productPrice;
+            totalPrice += cartItem.getQuantity() * productPrice;
         }
         return totalPrice;
     }
-    HttpStatus placeOrder(String emailID){
+    public HttpStatus placeOrder(String emailID){
         AppUser user = appUserRepository.findAppUserByEmailID(emailID);
         int totalPrice = getCartTotalPrice(emailID);
         if(user.getWalletAmount() >= totalPrice){
             ArrayList<CartItem> itemList = user.getCart().getItemList();
-            for(int i = 0; i < itemList.size(); i++){
-                String productID = itemList.get(i).getProductID();
+            for (CartItem cartItem : itemList) {
+                String productID = cartItem.getProductID();
                 Product product = productRepository.findProductByProductID(productID);
-                product.setOrderCount(product.getOrderCount() + itemList.get(i).getQuantity());
-                product.setQuantity(product.getQuantity()-itemList.get(i).getQuantity());
+                product.setOrderCount(product.getOrderCount() + cartItem.getQuantity());
+                product.setQuantity(product.getQuantity() - cartItem.getQuantity());
                 productRepository.save(product);
             }
             user.setWalletAmount(user.getWalletAmount() - totalPrice);
-            user.getOrderList().add(new Order(user.getUserID() + "_" + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
+            user.getOrderList().add(new Order(user.getId() + "_" + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
             user.getCart().setItemList(new ArrayList<>());
             appUserRepository.save(user);
             return(HttpStatus.OK);
