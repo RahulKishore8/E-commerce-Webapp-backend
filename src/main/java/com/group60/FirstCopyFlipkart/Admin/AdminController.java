@@ -4,6 +4,7 @@ import com.group60.FirstCopyFlipkart.Role.RoleService;
 import com.group60.FirstCopyFlipkart.appUser.Address;
 import com.group60.FirstCopyFlipkart.appUser.AppUser;
 import com.group60.FirstCopyFlipkart.appUser.AppUserService;
+import com.group60.FirstCopyFlipkart.product.Product;
 import com.group60.FirstCopyFlipkart.product.ProductService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -25,6 +26,21 @@ public class AdminController {
     private final AppUserService appUserService;
     private final RoleService roleService;
 
+    @GetMapping("/item-sales")
+    public ResponseEntity<ArrayList<ProductSalesOnDate>> getOrdersOnDate(@RequestBody DateJSON dateJSON){
+        HashMap<String, Integer> ordersOnDate = appUserService.getOrdersOnDate(dateJSON.getDate());
+        if(ordersOnDate == null){
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        ArrayList<ProductSalesOnDate> ordersOnDateJSON = new ArrayList<>();
+        for(Map.Entry<String,Integer> mapElement: ordersOnDate.entrySet()){
+            String productID = mapElement.getKey();
+            Product product = productService.findProductByProductID(productID);
+            ProductSalesOnDate entry = new ProductSalesOnDate(product, mapElement.getValue());
+            ordersOnDateJSON.add(entry);
+        }
+        return new ResponseEntity<>(ordersOnDateJSON, HttpStatus.OK);
+    }
     @PostMapping("/register-manager")
     public void createManager(HttpServletResponse response, @RequestBody NewManagerJSON newManagerJSON) {
         AppUser user = appUserService.findUserByEmailID(newManagerJSON.getEmailID());
@@ -135,4 +151,16 @@ class NewManagerJSON {
     private String emailID;
     private String phoneNumber;
     private String password;
+}
+
+@Data
+class DateJSON {
+    private Date date;
+}
+
+@Data
+@AllArgsConstructor
+class ProductSalesOnDate{
+    Product product;
+    int count;
 }

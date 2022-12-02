@@ -199,8 +199,12 @@ public class AppUserController {
         AppUser user = appUserService.findUserByEmailID(emailID);
         if(user != null){
             user.incrementProductQuantity(cartUpdateJSON.getProductID());
-            appUserService.save(user);
-            response.setStatus(HttpStatus.OK.value());
+            AppUser savedUser = appUserService.save(user);
+            if(savedUser != null){
+                response.setStatus(HttpStatus.OK.value());
+            }else{
+                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            }
         }else{
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
@@ -213,8 +217,12 @@ public class AppUserController {
         AppUser user = appUserService.findUserByEmailID(emailID);
         if(user != null){
             user.decrementProductQuantity(cartUpdateJSON.getProductID());
-            appUserService.save(user);
-            response.setStatus(HttpStatus.OK.value());
+            AppUser savedUser = appUserService.save(user);
+            if(savedUser != null){
+                response.setStatus(HttpStatus.OK.value());
+            }else{
+                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            }
         }else{
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }

@@ -15,10 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
@@ -191,5 +188,29 @@ public class AppUserService implements UserDetailsService {
         }else{
             return(HttpStatus.NOT_MODIFIED);
         }
+    }
+
+    public HashMap<String, Integer> getOrdersOnDate(Date date){
+        HashMap<String, Integer> ordersOnDate = new HashMap<>();
+        List<AppUser> customers = findAllCustomers();
+        for(AppUser customer: customers){
+            ArrayList<Order> orders = customer.getOrderList();
+            for(Order order: orders){
+                if(order.getOrderDate().equals(date)){
+                    ArrayList<CartItem> items = order.getCart().getItemList();
+                    for(CartItem cartItem: items){
+                        String curProductID = cartItem.getProductID();
+                        Integer curCount = ordersOnDate.get(curProductID);
+                        if(curCount == null){
+                            curCount = 1;
+                        }else{
+                            curCount = curCount + 1;
+                        }
+                        ordersOnDate.put(curProductID, curCount);
+                    }
+                }
+            }
+        }
+        return ordersOnDate;
     }
 }

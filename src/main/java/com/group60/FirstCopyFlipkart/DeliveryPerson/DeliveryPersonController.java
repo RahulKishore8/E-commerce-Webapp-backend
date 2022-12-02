@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 @AllArgsConstructor
 public class DeliveryPersonController {
     private final AppUserService appUserService;
+
     @GetMapping("/update-delivery-status")
     void updateDeliveryStatus(HttpServletResponse response, @RequestBody UpdateDeliveryJSON updateDeliveryJSON){
         response.setStatus(appUserService.updateOrderStatus(updateDeliveryJSON.getEmailID(), updateDeliveryJSON.getOrderID(), updateDeliveryJSON.getStatus()).value());
