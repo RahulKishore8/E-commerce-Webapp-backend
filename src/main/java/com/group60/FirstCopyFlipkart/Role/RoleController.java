@@ -1,7 +1,6 @@
-package com.group60.FirstCopyFlipkart.appUser;
+package com.group60.FirstCopyFlipkart.Role;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

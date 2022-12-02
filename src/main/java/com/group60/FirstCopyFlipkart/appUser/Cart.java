@@ -13,18 +13,6 @@ import java.util.ArrayList;
 @Data @AllArgsConstructor
 public class Cart {
     ArrayList<CartItem> itemList;
-    private final ProductService productService;
-    int getTotalPrice(){
-        int totalPrice = 0;
-        for(int i = 0; i < itemList.size(); i++){
-            String productID = itemList.get(i).getProductID();
-            Product product = productService.findProductByProductID(productID);
-            float productPrice = product.getPrice();
-            totalPrice += itemList.get(i).getQuantity() * productPrice;
-        }
-        return totalPrice;
-
-    }
 
     void incrementProductQuantity(String productID){
         CartItem newCartItem = new CartItem(productID,1);

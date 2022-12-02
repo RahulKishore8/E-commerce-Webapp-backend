@@ -1,4 +1,4 @@
-package com.group60.FirstCopyFlipkart.appUser;
+package com.group60.FirstCopyFlipkart.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

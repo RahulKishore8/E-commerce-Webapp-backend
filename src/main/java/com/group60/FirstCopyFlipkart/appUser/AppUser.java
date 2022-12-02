@@ -1,5 +1,6 @@
 package com.group60.FirstCopyFlipkart.appUser;
 
+import com.group60.FirstCopyFlipkart.Role.Role;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 
