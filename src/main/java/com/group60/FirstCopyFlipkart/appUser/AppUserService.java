@@ -56,6 +56,26 @@ public class AppUserService implements UserDetailsService {
         Role customer = roleRepository.findRoleByName("ROLE_DELIVERY_PERSON");
         return appUserRepository.findAllByRole(customer);
     }
+    public HttpStatus updateOrderStatus(String emailID, String orderID, String status){
+        AppUser appUser = appUserRepository.findAppUserByEmailID(emailID);
+        if(appUser == null){
+            return HttpStatus.NOT_FOUND;
+        }else{
+            ArrayList<Order> orderList = appUser.getOrderList();
+            for (Order order : orderList) {
+                if (order.getId().equals(orderID)) {
+                    order.setStatus(status);
+                }
+            }
+            appUser.setOrderList(orderList);
+            AppUser savedUser = appUserRepository.save(appUser);
+            if(savedUser == null){
+                return HttpStatus.NOT_MODIFIED;
+            }else{
+                return HttpStatus.OK;
+            }
+        }
+    }
     public AppUser findUserByEmailID(String emailID){
         return appUserRepository.findAppUserByEmailID(emailID);
     }
