@@ -1,12 +1,7 @@
 package com.group60.FirstCopyFlipkart.appUser;
 
-import com.group60.FirstCopyFlipkart.product.Product;
-import com.group60.FirstCopyFlipkart.product.ProductRepository;
-import com.group60.FirstCopyFlipkart.product.ProductService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.ArrayList;
 

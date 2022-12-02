@@ -3,8 +3,6 @@ package com.group60.FirstCopyFlipkart.appUser;
 import com.group60.FirstCopyFlipkart.product.Product;
 import com.group60.FirstCopyFlipkart.product.ProductRepository;
 import lombok.AllArgsConstructor;
-import lombok.extern.java.Log;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -144,9 +142,11 @@ public class AppUserService implements UserDetailsService {
                 String productID = itemList.get(i).getProductID();
                 Product product = productRepository.findProductByProductID(productID);
                 product.setOrderCount(product.getOrderCount() + itemList.get(i).getQuantity());
+                product.setQuantity(product.getQuantity()-itemList.get(i).getQuantity());
+                productRepository.save(product);
             }
             user.setWalletAmount(user.getWalletAmount() - totalPrice);
-            user.getOrderList().add(new Order(user.getUserID() + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
+            user.getOrderList().add(new Order(user.getUserID() + "_" + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
             user.getCart().setItemList(new ArrayList<>());
             appUserRepository.save(user);
             return(HttpStatus.OK);

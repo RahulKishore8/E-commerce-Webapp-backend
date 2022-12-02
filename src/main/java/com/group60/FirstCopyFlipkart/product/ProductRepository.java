@@ -13,7 +13,7 @@ public interface ProductRepository
     Product findProductByProductName(String productName);
 
     List<Product> findAll();
-
+    List<Product> findProductByCategoryName(String CategoryName);
     //modify
     @Override
     Product save(Product product);
