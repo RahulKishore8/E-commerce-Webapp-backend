@@ -21,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Slf4j
@@ -40,12 +41,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
         customAuthenticationFilter.setFilterProcessesUrl("/api/user/login");
         http.cors().and().csrf().disable();
         http.sessionManagement().sessionCreationPolicy(STATELESS);
-       // http.authorizeRequests().antMatchers("/api/login","/api/token/refresh?**","/api/user/register","/api/role").permitAll();
-        //Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>)    SecurityContextHolder.getContext().getAuthentication().getAuthorities();
-        //log.info(SecurityContextHolder.getContext().getAuthentication().toString());
-        http.authorizeRequests().anyRequest().permitAll();
-        //http.authorizeRequests().antMatchers(GET,"/api/products").hasAnyAuthority("ROLE_CUSTOMER");
-        //http.authorizeRequests().anyRequest().authenticated();
+        http.authorizeRequests().antMatchers("/api/user/login","/api/token/refresh","/api/user/register","/api/role").permitAll();
+        //http.authorizeRequests().anyRequest().permitAll();
+        http.authorizeRequests().antMatchers("/api/user/**").hasAnyAuthority("ROLE_CUSTOMER","ROLE_MANAGER", "ROLE_ADMIN","ROLE_DELIVERY_PERSON");
+        http.authorizeRequests().antMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN");
+        http.authorizeRequests().antMatchers("/api/delivery-person/**").hasAnyAuthority("ROLE_DELIVERY_PERSON");
+        http.authorizeRequests().antMatchers(GET,"/api/product/**").hasAnyAuthority("ROLE_CUSTOMER","ROLE_MANAGER", "ROLE_ADMIN");
+        http.authorizeRequests().antMatchers("/api/product/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN");
+        http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(customAuthenticationFilter);
         http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
     }

@@ -2,32 +2,42 @@ package com.group60.FirstCopyFlipkart.appUser;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 
-@Data @AllArgsConstructor
+@Data
+
 public class Cart {
     ArrayList<CartItem> itemList;
 
+    public Cart() {
+        itemList = new ArrayList<>();
+    }
+
     void incrementProductQuantity(String productID){
-        CartItem newCartItem = new CartItem(productID,1);
-        if(itemList.contains(newCartItem)){
-            int index = itemList.indexOf(newCartItem);
-            newCartItem.setQuantity(itemList.get(index).getQuantity()+1);
-            itemList.set(index,newCartItem);
-        }else{
+        boolean presentInCart = false;
+        for (CartItem cartItem : itemList) {
+            if (cartItem.getProductID().equals(productID)) {
+                cartItem.setQuantity(cartItem.getQuantity() + 1);
+                presentInCart = true;
+                break;
+            }
+        }
+        if(!presentInCart){
+            CartItem newCartItem = new CartItem(productID,1);
             itemList.add(newCartItem);
         }
     }
     void decrementProductQuantity(String productID){
-        CartItem newCartItem = new CartItem(productID,1);
-        if(itemList.contains(newCartItem)){
-            int index = itemList.indexOf(newCartItem);
-            if(itemList.get(index).getQuantity() > 1){
-                newCartItem.setQuantity(itemList.get(index).getQuantity()-1);
-                itemList.set(index,newCartItem);
-            }else{
-                itemList.remove(index);
+        for (CartItem cartItem : itemList) {
+            if (cartItem.getProductID().equals(productID)) {
+                if(cartItem.getQuantity() == 1){
+                    itemList.remove(cartItem);
+                }else{
+                    cartItem.setQuantity(cartItem.getQuantity() - 1);
+                }
+                break;
             }
         }
     }

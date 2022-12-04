@@ -17,8 +17,11 @@ public class ProductService {
     List<Product> findProductByCategoryName(String productName){
         return productRepository.findProductByCategoryName(productName);
     }
+    List<Product> searchProduct(String searchString){
+        return productRepository.findProductByProductNameContainingIgnoreCase(searchString);
+    }
     public Product findProductByProductID(String productID) {
-        return productRepository.findProductByProductID(productID);
+        return productRepository.findProductById(productID);
     }
 
     public Product findProductByProductName(String productName) {
@@ -31,7 +34,7 @@ public class ProductService {
     }
 
     public Product updateQuantity(String productID, int newQuantity){
-        Product product = productRepository.findProductByProductID(productID);
+        Product product = productRepository.findProductById(productID);
         if(product != null){
             product.setQuantity(newQuantity);
             return save(product);

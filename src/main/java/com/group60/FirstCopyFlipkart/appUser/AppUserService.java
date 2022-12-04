@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @AllArgsConstructor
@@ -144,8 +145,11 @@ public class AppUserService implements UserDetailsService {
     //Add Balance
     public AppUser addBalance(String emailID, int addedBalance){
         AppUser appUser = findUserByEmailID(emailID);
+        //log.info("added balance{}", addedBalance);
         if(appUser != null){
+            //log.info("existing balance{}",appUser.getWalletAmount());
             appUser.setWalletAmount(appUser.getWalletAmount() + addedBalance);
+            //log.info("new balance{}",appUser.getWalletAmount());
             return appUserRepository.save(appUser);
         } else{
             return null;
@@ -162,7 +166,7 @@ public class AppUserService implements UserDetailsService {
         ArrayList<CartItem> itemList = appUser.getCart().getItemList();
         for (CartItem cartItem : itemList) {
             String productID = cartItem.getProductID();
-            Product product = productRepository.findProductByProductID(productID);
+            Product product = productRepository.findProductById(productID);
             float productPrice = product.getPrice();
             totalPrice += cartItem.getQuantity() * productPrice;
         }
@@ -175,13 +179,13 @@ public class AppUserService implements UserDetailsService {
             ArrayList<CartItem> itemList = user.getCart().getItemList();
             for (CartItem cartItem : itemList) {
                 String productID = cartItem.getProductID();
-                Product product = productRepository.findProductByProductID(productID);
+                Product product = productRepository.findProductById(productID);
                 product.setOrderCount(product.getOrderCount() + cartItem.getQuantity());
                 product.setQuantity(product.getQuantity() - cartItem.getQuantity());
                 productRepository.save(product);
             }
             user.setWalletAmount(user.getWalletAmount() - totalPrice);
-            user.getOrderList().add(new Order(user.getId() + "_" + Integer.toString(user.getOrderList().size()), user.getCart(),new Date(), "order placed"));
+            user.getOrderList().add(new Order(user.getId() + "_" + Integer.toString(user.getOrderList().size()), itemList,new Date(), "order placed",totalPrice));
             user.getCart().setItemList(new ArrayList<>());
             appUserRepository.save(user);
             return(HttpStatus.OK);
@@ -196,16 +200,14 @@ public class AppUserService implements UserDetailsService {
         for(AppUser customer: customers){
             ArrayList<Order> orders = customer.getOrderList();
             for(Order order: orders){
-                if(order.getOrderDate().equals(date)){
-                    ArrayList<CartItem> items = order.getCart().getItemList();
+                SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+                if(fmt.format(order.getOrderDate()).equals(fmt.format(date))){
+                    ArrayList<CartItem> items = order.getItemList();
                     for(CartItem cartItem: items){
                         String curProductID = cartItem.getProductID();
-                        Integer curCount = ordersOnDate.get(curProductID);
-                        if(curCount == null){
-                            curCount = 1;
-                        }else{
-                            curCount = curCount + 1;
-                        }
+                        int curCount = ordersOnDate.getOrDefault(curProductID, 0);
+                        curCount = curCount + cartItem.getQuantity();
+                        log.info("order on date{} {}",curProductID,curCount);
                         ordersOnDate.put(curProductID, curCount);
                     }
                 }

@@ -8,10 +8,10 @@ public interface ProductRepository
         extends MongoRepository<Product, String> {
     //access
 
-    Product findProductByProductID(String productID);
-
+    Product findProductById (String productID);
     Product findProductByProductName(String productName);
 
+    List<Product> findProductByProductNameContainingIgnoreCase(String searchString);
     List<Product> findAll();
     List<Product> findProductByCategoryName(String CategoryName);
     //modify

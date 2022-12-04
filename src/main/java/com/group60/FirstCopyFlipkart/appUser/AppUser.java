@@ -18,7 +18,7 @@ public class AppUser {
     private String password;
     private int walletAmount;
     private Cart cart;
-    private ArrayList<Order> orderList;
+    private ArrayList<Order> orderList = new ArrayList<>();
 
     public void incrementProductQuantity(String productID){
         cart.incrementProductQuantity(productID);

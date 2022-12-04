@@ -69,6 +69,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>first-copy-flipkart</finalName>
 	</build>
 
 </project>
