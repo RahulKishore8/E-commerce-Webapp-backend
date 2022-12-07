@@ -59,7 +59,7 @@ public class AppUserController {
             newUser.setPassword(newUserJSON.getPassword());
             newUser.setRole(roleService.findRoleByName("ROLE_CUSTOMER"));
             newUser.setPhoneNumber(newUserJSON.getPhoneNumber());
-            newUser.setAddress(newUserJSON.getAddress());
+            newUser.setAddress(new Address());
             newUser.setCart(new Cart());
             newUser.setOrderList(new ArrayList<>());
             newUser.setWalletAmount(1000);

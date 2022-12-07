@@ -1,9 +1,11 @@
 package com.group60.FirstCopyFlipkart.product;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
+@CrossOrigin(origins = "localhost:3000")
 public interface ProductRepository
         extends MongoRepository<Product, String> {
     //access
