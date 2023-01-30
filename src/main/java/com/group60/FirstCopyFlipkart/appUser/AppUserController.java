@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.group60.FirstCopyFlipkart.Role.RoleService;
+import com.group60.FirstCopyFlipkart.product.Product;
 import com.group60.FirstCopyFlipkart.product.ProductService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,6 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class AppUserController {
     private final AppUserService appUserService;
     private final RoleService roleService;
+    private final ProductService productService;
 
     @GetMapping("/get-details")
     public ResponseEntity<AppUser> getAppUserByEmailID(HttpServletRequest request){
@@ -44,6 +47,27 @@ public class AppUserController {
         }else{
             return new ResponseEntity<>(null, HttpStatus.NOT_MODIFIED);
         }
+    }
+
+    @GetMapping("/get-cart")
+    public ResponseEntity<CartDetailsJSON> getCart(HttpServletRequest request){
+        AuthToken authToken = new AuthToken();
+        String emailID = authToken.getEmailID(request);
+        AppUser appUser = appUserService.findUserByEmailID(emailID);
+        if(appUser == null){
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        ArrayList<CartWithProductElement> list = new ArrayList<>();
+        ArrayList<CartItem> userCart = appUser.getCart().getItemList();
+        for(CartItem item : userCart){
+            Product product = productService.findProductByProductID(item.getProductID());
+            int quantity = item.getQuantity();
+            CartWithProductElement element = new CartWithProductElement(product, quantity);
+            list.add(element);
+        }
+        int price = appUserService.getCartTotalPrice(emailID);
+        CartDetailsJSON details = new CartDetailsJSON(list, price);
+        return new ResponseEntity<>(details, HttpStatus.OK);
     }
 
     @PostMapping("/register")
@@ -98,6 +122,7 @@ public class AppUserController {
     public void updateAddress(HttpServletRequest request, HttpServletResponse response, @RequestBody UpdateAddressJSON updateAddressJSON){
         AuthToken authToken = new AuthToken();
         String emailID = authToken.getEmailID(request);
+        log.info(updateAddressJSON.getAddress().toString());
         AppUser appUser = appUserService.changeAddress(emailID,updateAddressJSON.getAddress());
         if(appUser != null){
             response.setStatus(HttpStatus.OK.value());
@@ -227,9 +252,11 @@ public class AppUserController {
             if(savedUser != null){
                 response.setStatus(HttpStatus.OK.value());
             }else{
+                log.info("error in wallet");
                 response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
         }else{
+            log.info("error in wallet2");
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
@@ -285,6 +312,20 @@ class AddBalanceJSON {
     int balance;
 }
 
+@Data
+@AllArgsConstructor
+class CartDetailsJSON {
+    ArrayList<CartWithProductElement> cart;
+    int price;
+}
+
+@Data
+@AllArgsConstructor
+class CartWithProductElement {
+    Product product;
+    int quantity;
+}
+
 class AuthToken{
     public String getEmailID(HttpServletRequest request){
         String authorizationHeader = request.getHeader(AUTHORIZATION);
@@ -295,3 +336,4 @@ class AuthToken{
         return decodedJWT.getSubject();
     }
 }
+

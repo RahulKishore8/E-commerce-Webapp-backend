@@ -15,13 +15,11 @@ public interface ProductRepository
 
     List<Product> findProductByProductNameContainingIgnoreCase(String searchString);
     List<Product> findAll();
-    List<Product> findProductByCategoryName(String CategoryName);
+    List<Product> findProductByCategoryNameIgnoreCase(String CategoryName);
     //modify
     @Override
     Product save(Product product);
 
     //delete
-
-    @Override
-    void deleteById(String s);
+    void deleteProductByProductName(String name);
 }

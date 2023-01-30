@@ -15,7 +15,7 @@ public class ProductService {
         return productRepository.findAll();
     }
     List<Product> findProductByCategoryName(String productName){
-        return productRepository.findProductByCategoryName(productName);
+        return productRepository.findProductByCategoryNameIgnoreCase(productName);
     }
     List<Product> searchProduct(String searchString){
         return productRepository.findProductByProductNameContainingIgnoreCase(searchString);
@@ -44,7 +44,7 @@ public class ProductService {
     }
 
     //delete
-    public void delete(Product product){
-        productRepository.deleteById(product.getId());
+    public void deleteByName(String name){
+        productRepository.deleteProductByProductName(name);
     }
 }

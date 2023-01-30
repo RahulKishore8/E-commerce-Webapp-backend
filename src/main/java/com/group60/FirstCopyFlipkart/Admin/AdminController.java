@@ -26,6 +26,16 @@ public class AdminController {
     private final AppUserService appUserService;
     private final RoleService roleService;
 
+    @GetMapping("/report")
+    public ResponseEntity<ArrayList<ReportJSON>> getReport(){
+        List<Product> productList = productService.getAllProducts();
+        ArrayList<ReportJSON> responseList = new ArrayList<>();
+        for(Product product: productList){
+            ReportJSON reportJSON = new ReportJSON(product.getProductName(), product.getOrderCount());
+            responseList.add(reportJSON);
+        }
+        return new ResponseEntity<>(responseList, HttpStatus.OK);
+    }
     @GetMapping("/item-sales")
     public ResponseEntity<ArrayList<ProductSalesOnDate>> getOrdersOnDate(@RequestBody DateJSON dateJSON){
         HashMap<String, Integer> ordersOnDate = appUserService.getOrdersOnDate(dateJSON.getDate());
@@ -65,7 +75,7 @@ public class AdminController {
         }
     }
 
-    @DeleteMapping("/delete-manager")
+    @DeleteMapping("/delete-user")
     public void deleteManager(HttpServletRequest request, HttpServletResponse response,@RequestBody EmailIDJSON emailIDJSON){
         appUserService.deleteAppUserByEmailID(emailIDJSON.getEmailID());
         response.setStatus(HttpStatus.OK.value());
@@ -93,11 +103,6 @@ public class AdminController {
                 response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
         }
-    }
-    @DeleteMapping("/delete-delivery-person")
-    public void deleteDeliveryPerson(HttpServletRequest request, HttpServletResponse response,@RequestBody EmailIDJSON emailIDJSON){
-        appUserService.deleteAppUserByEmailID(emailIDJSON.getEmailID());
-        response.setStatus(HttpStatus.OK.value());
     }
 
     @GetMapping("/customer")
@@ -130,6 +135,7 @@ public class AdminController {
         }
     }
 
+
     @GetMapping("/delivery-person/all")
     public ResponseEntity<List<AppUser>> getAllDeliveryPersons(){
         List<AppUser> deliveryPersonList = appUserService.findAllDeliveryPersons();
@@ -139,6 +145,8 @@ public class AdminController {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
     }
+
+
 }
 
 @Data
@@ -158,6 +166,12 @@ class DateJSON {
     private Date date;
 }
 
+@Data
+@AllArgsConstructor
+class ReportJSON {
+    String productName;
+    int quantity;
+}
 @Data
 @AllArgsConstructor
 class ProductSalesOnDate{
